@@ -1,62 +1,80 @@
-import tkinter as tk  # Імпорт бібліотеки для створення GUI у Python та надання їй ім'я tk для подальшого використання.
-from tkinter import messagebox  # Імпорт підмодуля tkinter для відображення вікон повідомлень.
+import tkinter as tk
+from tkinter import messagebox
+import openpyxl
 
 
-# Функція, яка буде викликана при натисканні кнопки "Зберегти" у GUI.
 def save_currency_rate():
-    new_rate = entry.get()  # Отриммання значення, яке користувач ввів у поле для введення курсу валют.
-    # Значення зберігається у змінній new_rate.
+    new_rate = entry.get()
 
-    # Заміна коми на крапку у тексті для коректної обробки чисел з плаваючою комою.
     new_rate = new_rate.replace(',', '.')
 
-    if new_rate.replace('.', '', 1).isdigit():  # Перевірка, чи є введений текст коректним числом
-        # (цілим або з плаваючою комою). Також переконуємося, що у числі може бути тільки одна крапка.
-        try:  # Початок блоку спроби, який служить для обробки можливих помилок під час виконання коду всередині блоку.
-            # Цей блок відкриває файл для запису і використовує його у контексті with,
-            # щоб автоматично закрити файл після завершення роботи з ним.
+    if new_rate.replace('.', '', 1).isdigit():
+        try:
             with open('currency_rate.txt', 'w') as file:
-                file.write(new_rate)  # Значення new_rate записується у відкритий файл.
-            # Якщо операція збереження пройшла успішно, виводиться вікно з повідомленням про успіх.
+                file.write(new_rate)
             messagebox.showinfo("Успішно", f"Курс валют оновлено: {new_rate}")
-        # Якщо виникає помилка під час збереження, вона обробляється і
-        # виводиться повідомлення про помилку з описом помилки.
         except Exception as e:
             messagebox.showerror("Помилка", f"Не вдалося зберегти курс валют: {str(e)}")
-    # Якщо введений текст не є коректним числом, виводиться повідомлення про помилку.
     else:
         messagebox.showwarning("Увага", "Введіть коректний курс валют (число) перед збереженням!")
 
 
-# Функція для завантаження збереженого курсу валют при запуску програми.
 def load_currency_rate():
     try:
-        # Цей блок відкриває файл для читання та використовує його у контексті with,
-        # щоб автоматично закрити файл після завершення роботи з ним.
         with open('currency_rate.txt', 'r') as file:
             rate = file.read()
             if rate:
-                # Очищення поля введення та вставлення збереженого курсу.
                 entry.delete(0, 'end')
                 entry.insert(0, rate)
     except Exception as e:
-        pass  # Обробка помилок завантаження курсу валют, якщо такі є.
+        pass
 
 
-root = tk.Tk()  # Створення головного вікна програми.
-root.title("Курс валют")  # Встановлення заголовку головного вікна.
+def get_pump_price():
 
-label = tk.Label(root, text="Курс валют:")  # Створення текстового мітки (Label) з текстом "Курс валют:"
-label.pack()  # Виведення мітки на екран.
+    pump_info = pump_info_entry.get()
 
-entry = tk.Entry(root)  # Створення поля для введення тексту (Entry)
-entry.pack()  # Виведення поля для введення на екран.
+    try:
+        # Відкриваємо Excel-файл з цінами на насоси
+        workbook = openpyxl.load_workbook('price.xlsx')
+        sheet = workbook.active
+        # Шукаємо відповідний рядок за артикулом або назвою насосу
+        for row in sheet.iter_rows(values_only=True):
+            if pump_info in row:
+                # Отримуємо ціну насосу (припускаємо, що вона знаходиться у третьому стовпці)
+                price = row[2]
+                return price
+        # Якщо насос не знайдено, повертаємо None
+        return None
+    except Exception as e:
+        # Обробка можливих помилок при зчитуванні Excel-файлу
+        print(f"Помилка при зчитуванні цін: {e}")
+        return None
 
-# Створення кнопки з текстом "Зберегти" і прив'язка її до функції save_currency_rate
+
+root = tk.Tk()
+root.title("Курс валют")
+
+label = tk.Label(root, text="Курс валют:")
+label.pack()
+
+entry = tk.Entry(root)
+entry.pack()
+
 save_button = tk.Button(root, text="Зберегти", command=save_currency_rate)
-save_button.pack()  # Виведення кнопки на екран.
+save_button.pack()
 
-load_currency_rate()  # Виклик функції для завантаження збереженого курсу валют
+# Створення мітки та поля для введення артикулу або назви насосу
+pump_info_label = tk.Label(root, text="Назва або артикул насосу:")
+pump_info_label.pack()
 
-root.mainloop()  # Запуск головного циклу обробки подій tkinter,
-# який забезпечує відображення та взаємодію з GUI-додатком.
+pump_info_entry = tk.Entry(root)
+pump_info_entry.pack()
+
+# Кнопка для зчитування ціни насосу
+read_pump_price_button = tk.Button(root, text="Зчитати ціну насосу", command=get_pump_price)
+read_pump_price_button.pack()
+
+load_currency_rate()
+
+root.mainloop()

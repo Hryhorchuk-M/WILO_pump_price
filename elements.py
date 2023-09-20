@@ -23,6 +23,32 @@ if group_name:
 else:
     discount = None
 
+# Функція пошуку назви групи знижок (1 вар.):
+def find_discount_group_name(price_sheet, start_row_index):
+    discount_group = None
+    for row in reversed(list(price_sheet.iter_rows(min_row=start_row_index, values_only=True))):
+        for cell in row:
+            if "PG" in cell:
+                discount_group = cell
+                print(f"Знайдено групу знижки: {discount_group}")
+                break  # Завершуємо цикл, якщо знайдено відповідне значення
+        if discount_group:
+            break  # Завершуємо зовнішній цикл, якщо знайдено відповідне значення
+    print(f"Значення discount_group перед поверненням: {discount_group}")
+    return discount_group
+
+# Функція пошуку назви групи знижок (2 вар.):
+def find_discount_group_name(price_sheet, start_row_index):
+    discount_group = None
+    for row_num in range(start_row_index, 1, -1):
+        row = price_sheet.cell(row=row_num, column=2).value
+        if row.startswith("PG"):
+            discount_group = row
+            print(f"Знайдено групу знижки: {discount_group}")
+            break
+    print(f"Значення discount_group перед поверненням: {discount_group}")
+    return discount_group
+
 # Розрахунок ціни насосу у гривнях:
 if pump_price_currency is not None and discount is not None:
     pump_price_uah = pump_price_currency * (1 - discount) * currency_rate
